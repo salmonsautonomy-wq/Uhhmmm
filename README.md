@@ -66,4 +66,31 @@ Feedback, questions, collaboration interest, or bug reports? Feel free to open a
 
 ---
 
-**"Uhhmmm... let's make autonomy safe, scalable, and actually useful."**
+Uhhmmm / SalmonOS
+Autonomous Intelligence Operating System (AI‑OS)
+SalmonOS is an experimental platform for autonomous systems — designed to help machines operate safely, coordinate efficiently, and handle complex tasks in real time. Think of it as a brain for intelligent systems, with safety, logic, and modular design built in.
+🚀 Key Features
+Safe Operations: Core logic ensures autonomous processes follow rules and avoid conflicts.
+Modular Design: Flexible components that can be adapted or replaced as projects evolve.
+Real-Time Logic: Handles dynamic events quickly, keeping systems responsive and coordinated.
+Documentation-First Approach: All components are explained in detail to make integration easier.
+💡 Purpose
+SalmonOS isn’t just code — it’s a framework for thinking about autonomous systems.
+It’s designed to:
+Give developers a clear architecture for intelligent agents
+Provide safety and compliance guidelines for real-world deployments
+Encourage experimentation with modular AI systems
+🛠️ Current Status
+This project is early-stage:
+Core architecture and logic files are in place
+Documentation guides outline integration and system design
+No fully packaged deployment yet — this is a research & prototype platform
+📁 Structure
+/docs — Design documents, integration guides, architecture overview
+/src — Early code prototypes for core systems
+/examples — Demonstrations and snapshots of core functionality
+🌱 Getting Involved
+If you want to experiment, contribute, or learn from SalmonOS:
+Explore the documentation in /docs
+Run prototype scripts from /src
+Share feedback or improvements via issues or pull requests
