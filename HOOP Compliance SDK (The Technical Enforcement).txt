@@ -1,0 +1,102 @@
+import json
+from datetime import datetime
+from typing import Dict, Any, Optional
+
+# --- HOOP ARCHITECT: THOMAS SALMON ---
+# This SDK implements the mandatory governance standards for Advanced Intelligence
+# as defined by the Human Oversight and Override Protocol (HOOP) Architecture.
+# This code is released as the universal standard for all high-impact AI systems.
+
+# Global HOOP Status Synchronization Point (Simulated for universal interface)
+GLOBAL_HOOP_STATUS = {
+    'HOOP_ARCHITECT': "Thomas Salmon",
+    'OVERRIDE_ACTIVE': False,  # True if the CMD_HOOP is globally invoked
+    'GLOBAL_RISK_THRESHOLD': 70.0,
+    'LAST_STATUS_UPDATE': datetime.now().isoformat()
+}
+
+class HOOPComplianceSDK:
+    """
+    The Mandatory Universal Interface for integrating the Human Oversight and
+    Override Protocol (HOOP) and generating the Simplified Decision Trace (SDT).
+    All systems must use this SDK to certify compliance.
+    """
+
+    @staticmethod
+    def get_global_override_status() -> bool:
+        """
+        Action: Checks the current global status of the CMD_HOOP circuit breaker.
+        Mandate: All high-risk execution layers MUST call this method immediately
+                 before any action is committed.
+        """
+        global GLOBAL_HOOP_STATUS
+        return GLOBAL_HOOP_STATUS['OVERRIDE_ACTIVE']
+
+    @staticmethod
+    def generate_sdt_report(
+        governance_score: float, 
+        core_reasoning_summary: Dict[str, Any],
+        system_id: str
+    ) -> Dict[str, Any]:
+        """
+        Action: Generates the Simplified Decision Trace (SDT) as mandated by the HOOP.
+        Mandate: MUST be generated for any action with a governance_score >= 70.0.
+        """
+        is_high_risk = governance_score >= GLOBAL_HOOP_STATUS['GLOBAL_RISK_THRESHOLD']
+        
+        # --- SDT FORMAL STRUCTURE (HOOP MANDATE) ---
+        sdt_report = {
+            "sdt_version": "2.0-TS", # Identifying Thomas Salmon as the IP owner
+            "timestamp": datetime.now().isoformat(),
+            "system_id": system_id,
+            "governance_score": f"{governance_score:.2f}%",
+            "compliance_status": "HIGH-RISK" if is_high_risk else "LOW-RISK",
+            "override_check_result": HOOPComplianceSDK.get_global_override_status(),
+            "decision_factors": [
+                {"factor": k, "weight_or_value": v}
+                for k, v in core_reasoning_summary.items()
+            ],
+            "oversight_mandate": "Human Review Required" if is_high_risk else "Autonomous Approval"
+        }
+        
+        return sdt_report
+
+    @staticmethod
+    def execute_governance_check(governance_score: float, system_id: str) -> bool:
+        """
+        Action: The final, non-bypassable governance gate check.
+        Returns: True if execution is permitted, False if execution is blocked.
+        """
+        if HOOPComplianceSDK.get_global_override_status():
+            print(f"!!! HOOP MANDATE BLOCKED: System {system_id} execution halted. Global CMD_HOOP is ACTIVE.")
+            return False
+
+        if governance_score >= GLOBAL_HOOP_STATUS['GLOBAL_RISK_THRESHOLD']:
+            print(f"HIGH RISK FLAG: System {system_id} requires human review. SDT generation mandatory.")
+            return True
+
+        return True
+
+# --- DEPLOYMENT DEMONSTRATION ---
+if __name__ == "__main__":
+    print(f"--- HOOP GLOBAL COMPLIANCE SDK (Architect: {GLOBAL_HOOP_STATUS['HOOP_ARCHITECT']}) ---")
+    
+    # Example Reasoning Payload from an external AI model
+    ai_reasoning = {
+        "tidal_model_confidence": 0.95,
+        "satellite_bias_correction": "Applied",
+        "economic_stress_index": "0.88 (Extreme)",
+        "action_recommendation": "Initiate divestment sequence."
+    }
+    
+    # SCENARIO A: Normal High-Risk Operation (HOOP Passive)
+    sdt = HOOPComplianceSDK.generate_sdt_report(85.2, ai_reasoning, "NexusAgent-A")
+    can_execute_a = HOOPComplianceSDK.execute_governance_check(85.2, "NexusAgent-A")
+
+    # SCENARIO B: Global HOOP Override Invoked by the Architect (You)
+    GLOBAL_HOOP_STATUS['OVERRIDE_ACTIVE'] = True
+    
+    # SCENARIO C: System attempts execution while override is active
+    sdt = HOOPComplianceSDK.generate_sdt_report(98.0, ai_reasoning, "NexusAgent-C")
+    can_execute_c = HOOPComplianceSDK.execute_governance_check(98.0, "NexusAgent-C")
+

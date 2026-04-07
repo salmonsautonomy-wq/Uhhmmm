@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalmonOS - Export UI JSON & PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            color: #e8e8e8;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, rgba(255, 69, 0, 0.2), rgba(255, 140, 0, 0.2));
+            border: 2px solid #FF4500;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 40px rgba(255, 69, 0, 0.4);
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 48px;
+            background: linear-gradient(45deg, #FF4500, #FF8C00, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+        }
+        
+        .section {
+            background: rgba(45, 45, 45, 0.8);
+            border: 2px solid rgba(255, 69, 0, 0.3);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section h2 {
+            color: #FF4500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+        }
+        
+        .export-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .export-btn {
+            padding: 20px;
+            background: linear-gradient(135deg, #FF4500, #FF6B00);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.4);
+            letter-spacing: 1px;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 69, 0, 0.6);
+        }
+        
+        .export-btn:active {
+            transform: translateY(0);
+        }
+        
+        .code-block {
+            background: #000;
+            border: 1px solid #FF4500;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .code-block pre {
+            color: #00ff00;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+            animation: pulse 2s infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid rgba(255, 69, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .info-card h3 {
+            color: #FF8C00;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .info-card p {
+            color: #00ff00;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF4500, #FF6B00);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(255, 69, 0, 0.6);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+            display: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>SALMONOS</h1>
+            <p style="color: #c0c0c0; font-size: 16px; letter-spacing: 2px;">
+                UI CONFIGURATION & DOCUMENTATION EXPORT
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>
+                <span class="status-indicator"></span>
+                EXPORT OPTIONS
+            </h2>
+            <div class="export-buttons">
+                <button class="export-btn" onclick="exportUIJSON()">
+                    📄 EXPORT UI JSON
+                </button>
+                <button class="export-btn" onclick="exportFullPDF()">
+                    📑 EXPORT FULL PDF DOCS
+                </button>
+                <button class="export-btn" onclick="exportComponentJSON()">
+                    🔧 EXPORT COMPONENTS JSON
+                </button>
+                <button class="export-btn" onclick="exportDeploymentJSON()">
+                    🚀 EXPORT DEPLOYMENT CONFIG
+                </button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>SYSTEM SPECIFICATIONS</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>Platform</h3>
+                    <p>React 18</p>
+                </div>
+                <div class="info-card">
+                    <h3>Applications</h3>
+                    <p id="app-count">6</p>
+                </div>
+                <div class="info-card">
+                    <h3>Grid Nodes</h3>
+                    <p id="grid-count">5</p>
+                </div>
+                <div class="info-card">
+                    <h3>Blockchain Chains</h3>
+                    <p id="chain-count">4</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>PREVIEW: UI STRUCTURE JSON</h2>
+            <div class="code-block">
+                <pre id="json-preview"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>SYSTEM STATUS</h2>
+            <div style="color: #c0c0c0; line-height: 1.8;">
+                <p><span class="status-indicator"></span> All export functions operational</p>
+                <p><span class="status-indicator"></span> PDF generation ready</p>
+                <p><span class="status-indicator"></span> JSON serialization active</p>
+                <p><span class="status-indicator"></span> Download handlers initialized</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Complete UI Configuration
+        const salmonOSConfig = {
+            system: {
+                name: "SalmonOS",
+                version: "1.0.0",
+                codename: "Upstream",
+                architecture: "Web-based Desktop Environment",
+                creator: "AI-Assisted Development",
+                date: "2025-02-02"
+            },
+            applications: [
+                {
+                    id: "terminal",
+                    name: "Terminal",
+                    icon: "Terminal",
+                    description: "Command-line interface with full system access",
+                    color: "#00ff00",
+                    features: ["Command execution", "System monitoring", "File operations", "Process management"]
+                },
+                {
+                    id: "browser",
+                    name: "Salmon Browser",
+                    icon: "Globe",
+                    description: "Integrated web browser with decentralized features",
+                    color: "#0080ff",
+                    features: ["Web3 integration", "Privacy mode", "Tab management", "Bookmark sync"]
+                },
+                {
+                    id: "files",
+                    name: "File Manager",
+                    icon: "FolderOpen",
+                    description: "Advanced file management with cloud integration",
+                    color: "#ffa500",
+                    features: ["Drag and drop", "Cloud storage", "Search", "Preview"]
+                },
+                {
+                    id: "blockchain",
+                    name: "Blockchain Explorer",
+                    icon: "Link",
+                    description: "Multi-chain blockchain explorer and transaction manager",
+                    color: "#9b59b6",
+                    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+                    features: ["Real-time monitoring", "Transaction tracking", "Smart contract interaction"]
+                },
+                {
+                    id: "grid",
+                    name: "SalmonGrid",
+                    icon: "Grid3x3",
+                    description: "Decentralized computing grid network interface",
+                    color: "#FF4500",
+                    nodes: [
+                        { name: "Node Alpha", coords: "40.7128° N, 74.0060° W", status: "active" },
+                        { name: "Node Beta", coords: "51.5074° N, 0.1278° W", status: "active" },
+                        { name: "Node Gamma", coords: "35.6762° N, 139.6503° E", status: "active" },
+                        { name: "Node Delta", coords: "48.8566° N, 2.3522° E", status: "active" },
+                        { name: "Node Epsilon", coords: "37.7749° N, 122.4194° W", status: "active" }
+                    ],
+                    features: ["Distributed computing", "Resource pooling", "Load balancing"]
+                },
+                {
+                    id: "ccex",
+                    name: "CCE-X Exchange",
+                    icon: "DollarSign",
+                    description: "Carbon Credit Exchange with blockchain settlement",
+                    color: "#2ecc71",
+                    features: [
+                        "Real-time trading",
+                        "Smart contract escrow",
+                        "Multi-currency support",
+                        "Automated compliance"
+                    ],
+                    tradingPairs: [
+                        "CCE/USD",
+                        "CCE/ETH",
+                        "CCE/USDC",
+                        "CCE/DAI"
+                    ]
+                }
+            ],
+            theme: {
+                primary: "#FF4500",
+                secondary: "#FF8C00",
+                accent: "#FFA500",
+                background: "#0a0a0a",
+                surface: "#1a1a1a",
+                text: "#e8e8e8",
+                success: "#00ff00",
+                warning: "#ffaa00",
+                error: "#ff0000"
+            },
+            infrastructure: {
+                blockchain: {
+                    chains: ["Ethereum", "Polygon", "Arbitrum", "Optimism"],
+                    contracts: {
+                        policyNFT: {
+                            name: "Policy NFT Contract",
+                            standard: "ERC-721",
+                            features: ["Metadata storage", "Transfer hooks", "Royalty support"]
+                        },
+                        escrow: {
+                            name: "Smart Escrow",
+                            standard: "ERC-20 Compatible",
+                            features: ["Time locks", "Multi-signature", "Automated release"]
+                        }
+                    }
+                },
+                grid: {
+                    protocol: "SalmonGrid Protocol v1",
+                    consensus: "Proof of Computation",
+                    nodes: 5,
+                    features: ["Task distribution", "Result verification", "Reward system"]
+                },
+                ccex: {
+                    type: "Decentralized Exchange",
+                    guaranteeFactor: 1.35,
+                    premiumRate: 0.10,
+                    settlementChain: "Ethereum",
+                    features: ["Automated market making", "Liquidity pools", "Yield farming"]
+                }
+            },
+            ui: {
+                windows: {
+                    defaultSize: {
+                        width: 800,
+                        height: 600,
+                        minWidth: 400,
+                        minHeight: 300
+                    }
+                },
+                components: {
+                    windows: ["draggable", "resizable", "minimizable", "closeable"],
+                    taskbar: ["app launcher", "open windows", "system tray", "clock"],
+                    systemTray: ["CPU monitor", "memory monitor", "network status", "time"]
+                }
+            },
+            deployment: {
+                platforms: ["Firebase Hosting", "Vercel", "Google IDX"],
+                requirements: {
+                    node: ">=18.0.0",
+                    npm: ">=9.0.0",
+                    frameworks: ["React", "Lucide Icons"]
+                },
+                buildCommand: "npm run build",
+                deployCommand: "firebase deploy --only hosting"
+            }
+        };
+
+        // Update counts dynamically
+        function updateCounts() {
+            document.getElementById('app-count').textContent = salmonOSConfig.applications.length;
+            const gridApp = salmonOSConfig.applications.find(a => a.id === 'grid');
+            document.getElementById('grid-count').textContent = gridApp ? gridApp.nodes.length : 0;
+            document.getElementById('chain-count').textContent = salmonOSConfig.infrastructure.blockchain.chains.length;
+        }
+
+        // Display preview
+        function displayPreview() {
+            document.getElementById('json-preview').textContent = JSON.stringify(salmonOSConfig, null, 2);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Export UI JSON
+        function exportUIJSON() {
+            try {
+                const dataStr = JSON.stringify(salmonOSConfig, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'salmonos-ui-config.json';
+                link.click();
+                URL.revokeObjectURL(url);
+                showNotification('✅ UI JSON exported successfully!');
+            } catch (error) {
+                showNotification('❌ Export failed: ' + error.message);
+            }
+        }
+
+        // Export Components JSON
+        function exportComponentJSON() {
+            try {
+                const components = {
+                    components: salmonOSConfig.applications,
+                    theme: salmonOSConfig.theme,
+                    ui: salmonOSConfig.ui
+                };
+                const dataStr = JSON.stringify(components, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'salmonos-components.json';
+                link.click();
+                URL.revokeObjectURL(url);
+                showNotification('✅ Components JSON exported successfully!');
+            } catch (error) {
+                showNotification('❌ Export failed: ' + error.message);
+            }
+        }
+
+        // Export Deployment JSON
+        function exportDeploymentJSON() {
+            try {
+                const deployment = {
+                    system: salmonOSConfig.system,
+                    infrastructure: salmonOSConfig.infrastructure,
+                    deployment: salmonOSConfig.deployment
+                };
+                const dataStr = JSON.stringify(deployment, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'salmonos-deployment.json';
+                link.click();
+                URL.revokeObjectURL(url);
+                showNotification('✅ Deployment config exported successfully!');
+            } catch (error) {
+                showNotification('❌ Export failed: ' + error.message);
+            }
+        }
+
+        // Export Full PDF Documentation
+        function exportFullPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                let yPos = 20;
+                const lineHeight = 7;
+                const pageHeight = doc.internal.pageSize.height;
+                
+                // Helper to add new page if needed
+                const checkPage = () => {
+                    if (yPos > pageHeight - 20) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                };
+                
+                // Title
+                doc.setFontSize(24);
+                doc.setTextColor(255, 69, 0);
+                doc.text('SALMONOS', 105, yPos, { align: 'center' });
+                yPos += 15;
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Complete System Documentation', 105, yPos, { align: 'center' });
+                yPos += 20;
+                
+                // System Information
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('System Information', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Name: ${salmonOSConfig.system.name}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Version: ${salmonOSConfig.system.version}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Codename: ${salmonOSConfig.system.codename}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Architecture: ${salmonOSConfig.system.architecture}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Creator: ${salmonOSConfig.system.creator}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Date: ${salmonOSConfig.system.date}`, 20, yPos);
+                yPos += 15;
+                
+                checkPage();
+                
+                // Applications
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('Applications', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                salmonOSConfig.applications.forEach(app => {
+                    checkPage();
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`• ${app.name}`, 20, yPos);
+                    yPos += lineHeight;
+                    doc.setFont(undefined, 'normal');
+                    doc.text(`  ${app.description}`, 25, yPos);
+                    yPos += lineHeight;
+                    if (app.features) {
+                        doc.text(`  Features: ${app.features.join(', ')}`, 25, yPos);
+                        yPos += lineHeight;
+                    }
+                    yPos += 2;
+                });
+                
+                yPos += 10;
+                checkPage();
+                
+                // Grid Infrastructure
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('Grid Infrastructure', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                const gridApp = salmonOSConfig.applications.find(a => a.id === 'grid');
+                if (gridApp && gridApp.nodes) {
+                    gridApp.nodes.forEach(node => {
+                        checkPage();
+                        doc.text(`• ${node.name}: ${node.coords} (${node.status})`, 20, yPos);
+                        yPos += lineHeight;
+                    });
+                }
+                
+                yPos += 15;
+                checkPage();
+                
+                // Blockchain Integration
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('Blockchain Integration', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Supported Chains: ${salmonOSConfig.infrastructure.blockchain.chains.join(', ')}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Smart Contract: ${salmonOSConfig.infrastructure.blockchain.contracts.policyNFT.name}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Standard: ${salmonOSConfig.infrastructure.blockchain.contracts.policyNFT.standard}`, 20, yPos);
+                yPos += 15;
+                
+                checkPage();
+                
+                // CCE-X Exchange
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('CCE-X Exchange', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Guarantee Factor: ${(salmonOSConfig.infrastructure.ccex.guaranteeFactor * 100).toFixed(2)}%`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Premium Rate: ${(salmonOSConfig.infrastructure.ccex.premiumRate * 100).toFixed(2)}%`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Settlement Chain: ${salmonOSConfig.infrastructure.ccex.settlementChain}`, 20, yPos);
+                yPos += 15;
+                
+                checkPage();
+                
+                // Theme Colors
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('Theme Configuration', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                Object.keys(salmonOSConfig.theme).forEach(key => {
+                    checkPage();
+                    doc.text(`${key}: ${salmonOSConfig.theme[key]}`, 20, yPos);
+                    yPos += lineHeight;
+                });
+                
+                yPos += 15;
+                checkPage();
+                
+                // Deployment
+                doc.setFontSize(16);
+                doc.setTextColor(255, 69, 0);
+                doc.text('Deployment Configuration', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Platforms: ${salmonOSConfig.deployment.platforms.join(', ')}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Node.js: ${salmonOSConfig.deployment.requirements.node}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Build: ${salmonOSConfig.deployment.buildCommand}`, 20, yPos);
+                yPos += lineHeight;
+                doc.text(`Deploy: ${salmonOSConfig.deployment.deployCommand}`, 20, yPos);
+                
+                // Footer
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.text(`SalmonOS Documentation - Page ${i} of ${pageCount}`, 105, pageHeight - 10, { align: 'center' });
+                }
+                
+                // Save
+                doc.save('salmonos-documentation.pdf');
+                showNotification('✅ PDF documentation exported successfully!');
+            } catch (error) {
+                showNotification('❌ PDF export failed: ' + error.message);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            updateCounts();
+            displayPreview();
+            console.log('✅ SalmonOS Export UI initialized successfully');
+        });
+    </script>
+</body>
+</html>
